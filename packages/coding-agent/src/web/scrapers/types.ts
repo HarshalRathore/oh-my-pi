@@ -44,6 +44,10 @@ export const BROWSER_USER_AGENT =
 
 const USER_AGENTS = ["curl/8.0", "Mozilla/5.0 (compatible; TextBot/1.0)", BROWSER_USER_AGENT];
 
+/** Amazon serves curl and uncompressed requests a trimmed product page without reviews. */
+export const AMAZON_HOST = /(^|\.)amazon\.[a-z.]+$/i;
+export const AMAZON_PAGE_HEADERS = { "User-Agent": BROWSER_USER_AGENT, "Accept-Encoding": "gzip, deflate, br" };
+
 function isBotBlocked(status: number, content: string): boolean {
 	if (status === 403 || status === 503) {
 		const lower = content.toLowerCase();
