@@ -23,7 +23,7 @@ import { decodeBody } from "../web/response-body";
 import { findFirecrawlApiKey, scrapeWithFirecrawl } from "../web/firecrawl";
 import { extractWithParallel, findParallelApiKey, getParallelExtractContent } from "../web/parallel";
 import type { RenderResult, SpecialHandler } from "../web/scrapers/types";
-import { finalizeOutput, loadPage, looksLikeHtml, MAX_BYTES } from "../web/scrapers/types";
+import { BROWSER_USER_AGENT, finalizeOutput, loadPage, looksLikeHtml, MAX_BYTES } from "../web/scrapers/types";
 import { type BinaryFetchResult, convertWithMarkit, fetchBinary } from "../web/scrapers/utils";
 import { findCredential } from "../web/search/providers/utils";
 import { applyListLimit } from "@oh-my-pi/pi-tui/tools/list-limit";
@@ -1133,7 +1133,11 @@ async function renderUrl(
 	const skipBody = (contentType: string): boolean =>
 		shouldSkipBodyDownload(contentType) ||
 		(GENERIC_BINARY_MIMES[normalizeMime(contentType)] === true && CONVERTIBLE_EXTENSIONS.has(requestExtHint));
-	let response = await loadPage(url, { timeout, signal, skipBodyForContentType: skipBody });
+	// Amazon serves curl and uncompressed requests a trimmed product page without reviews.
+	const headers = /(^|\.)amazon\.[a-z.]+$/i.test(URL.parse(url)?.hostname ?? "")
+		? { "User-Agent": BROWSER_USER_AGENT, "Accept-Encoding": "gzip, deflate, br" }
+		: undefined;
+	let response = await loadPage(url, { timeout, signal, headers, skipBodyForContentType: skipBody });
 	if (
 		response.ok &&
 		response.bodySkipped &&
@@ -1141,7 +1145,7 @@ async function renderUrl(
 		!CONVERTIBLE_EXTENSIONS.has(getExtensionHint(response.finalUrl))
 	) {
 		// Redirect dropped the convertible extension; the body is needed after all.
-		response = await loadPage(url, { timeout, signal, skipBodyForContentType: shouldSkipBodyDownload });
+		response = await loadPage(url, { timeout, signal, headers, skipBodyForContentType: shouldSkipBodyDownload });
 	}
 	if (signal?.aborted) {
 		throw new ToolAbortError();

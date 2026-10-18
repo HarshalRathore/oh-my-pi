@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `read` on Amazon product pages missing customer reviews: Amazon sends a trimmed page to the default curl request, so `read` now asks Amazon hosts for the page as a browser with compression
+
 ## [18.12.2] - 2026-10-18
 
 ### Added
