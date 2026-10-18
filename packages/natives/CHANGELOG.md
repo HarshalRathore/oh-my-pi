@@ -2,11 +2,13 @@
 
 ## [Unreleased]
 
+### Added
+
+- Added a `hiddenContent` option to `htmlToMarkdown` (`"drop"` by default, `"reachable"`, or `"all"`): `"reachable"` keeps collapsed sections and inactive tab panels hidden with inline `display:none` ([#16246](https://github.com/can1357/oh-my-pi/issues/16246), [#16247](https://github.com/can1357/oh-my-pi/pull/16247) by [@HarshalRathore](https://github.com/HarshalRathore))
+
 ## [18.12.2] - 2026-10-18
 
 ### Added
-- Added a `hiddenContent` option to `htmlToMarkdown` (`"drop"` by default, `"reachable"`, or `"all"`): `"reachable"` keeps collapsed sections and inactive tab panels hidden with inline `display:none` ([#16246](https://github.com/can1357/oh-my-pi/issues/16246), [#16247](https://github.com/can1357/oh-my-pi/pull/16247) by [@HarshalRathore](https://github.com/HarshalRathore))
-
 - Added a `refuseMenu` option to `click`, `drag` and `holdMouse`: a macOS background left click on a menu button or popup button, or a drag or hold starting on one, throws `BackgroundUnavailable` before anything is sent ([#15191](https://github.com/can1357/oh-my-pi/pull/15191) by [@will-bogusz](https://github.com/will-bogusz))
 - Added a `returnFocus` option for window input with `takeover`: on macOS the takeover hands focus back to your app even if you clicked meanwhile, and only a third app you switched to keeps focus ([#15191](https://github.com/can1357/oh-my-pi/pull/15191) by [@will-bogusz](https://github.com/will-bogusz))
 - Added `DesktopSession.axSelectText` (macOS) to select text in an accessibility element's value by UTF-16 range, refusing missing or ambiguous matches and returning the selection read back ([#15175](https://github.com/can1357/oh-my-pi/pull/15175) by [@will-bogusz](https://github.com/will-bogusz))
