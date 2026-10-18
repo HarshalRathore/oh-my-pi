@@ -31,7 +31,7 @@
 
 ### Fixed
 
-- Fixed `read` on web pages dropping collapsed sections: rows inside accordions such as Amazon's "Product information" panels (Item details, Style, Measurements, Materials & Care, Features & Specs) were removed because the page ships them with inline `display:none`; only their headers showed up as `javascript:void(0)` links ([#16246](https://github.com/can1357/oh-my-pi/issues/16246), [#16247](https://github.com/can1357/oh-my-pi/pull/16247) by [@HarshalRathore](https://github.com/HarshalRathore))
+- Fixed `read` omitting content in collapsed web-page sections, such as Amazon's Product information tables ([#16246](https://github.com/can1357/oh-my-pi/issues/16246), [#16247](https://github.com/can1357/oh-my-pi/pull/16247) by [@HarshalRathore](https://github.com/HarshalRathore))
 - Fixed repeated status commands such as `/goal show` showing nothing after the first few times in a native terminal when the text had not changed
 - Fixed browser relay tabs that a browser already had open when its extension connected staying invisible to omp until they changed; opening such a tab by `app.target` could fail with "Selected tab did not become available before omp could attach"
 - Fixed Ollama Cloud sessions compacting too early on stripped thinking or too late after switching from another model ([#16164](https://github.com/can1357/oh-my-pi/issues/16164))
