@@ -8,12 +8,13 @@
 import type { Document as AmazonDocument, Element, Node } from "@oh-my-pi/pi-utils/dom";
 import {
 	AMAZON_HOST,
-	AMAZON_PAGE_HEADERS,
+	AMAZON_PAGE_OPTIONS,
 	buildResult,
 	htmlToBasicMarkdown,
 	loadPage,
 	type SpecialHandler,
 } from "./types";
+import { ToolAbortError } from "../../tools/tool-errors";
 
 interface AmazonPage {
 	doc: AmazonDocument;
@@ -180,7 +181,7 @@ function stripHeadingEcho(markdown: string, heading: string): string {
 	const target = normalize(heading);
 	const lines = markdown.split("\n").filter(line => {
 		const text = normalize(line);
-		return !text || (text !== target && !text.startsWith(`${target} `));
+		return !text || (text !== target && !(/^#+\s/.test(line) && text.startsWith(`${target} `)));
 	});
 	return lines.join("\n").trim();
 }
@@ -445,6 +446,7 @@ async function renderReviews(ctx: AmazonPage): Promise<string | null> {
 	return blocks.length > 0 ? blocks.join("\n\n") : null;
 }
 
+/** Render Amazon product HTML as compact markdown, or null when the page has no `#productTitle`. */
 export async function renderAmazonProduct(html: string, pageUrl: string): Promise<string | null> {
 	// Kept dynamic: the DOM parser stays off the CLI startup graph (same as wikipedia.ts).
 	const { parseHTML } = await import("@oh-my-pi/pi-utils/dom");
@@ -480,12 +482,13 @@ export async function renderAmazonProduct(html: string, pageUrl: string): Promis
 		.trim();
 }
 
+/** `read` handler for Amazon `/dp/<ASIN>` and `/gp/product/<ASIN>` pages; null hands the URL to the generic reader. */
 export const handleAmazon: SpecialHandler = async (url, timeout, signal) => {
 	try {
 		const parsed = new URL(url);
 		if (!AMAZON_HOST.test(parsed.hostname) || !PRODUCT_PATH.test(parsed.pathname)) return null;
 		const fetchedAt = new Date().toISOString();
-		const result = await loadPage(url, { timeout, signal, headers: AMAZON_PAGE_HEADERS });
+		const result = await loadPage(url, { ...AMAZON_PAGE_OPTIONS, timeout, signal });
 		if (!result.ok) return null;
 		const markdown = await renderAmazonProduct(result.content, result.finalUrl ?? url);
 		if (!markdown) return null;
@@ -496,7 +499,8 @@ export const handleAmazon: SpecialHandler = async (url, timeout, signal) => {
 			fetchedAt,
 			truncated: result.truncated,
 		});
-	} catch {
+	} catch (error) {
+		if (error instanceof ToolAbortError) throw error;
 		return null;
 	}
 };

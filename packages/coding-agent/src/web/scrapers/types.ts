@@ -39,14 +39,18 @@ export type SpecialHandler = (
 /** Network read bound for a fetched body; the only size limit on rendered URL content. */
 export const MAX_BYTES = 50 * 1024 * 1024;
 
-export const BROWSER_USER_AGENT =
+const BROWSER_USER_AGENT =
 	"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
 const USER_AGENTS = ["curl/8.0", "Mozilla/5.0 (compatible; TextBot/1.0)", BROWSER_USER_AGENT];
 
 /** Amazon serves curl and uncompressed requests a trimmed product page without reviews. */
-export const AMAZON_HOST = /(^|\.)amazon\.[a-z.]+$/i;
-export const AMAZON_PAGE_HEADERS = { "User-Agent": BROWSER_USER_AGENT, "Accept-Encoding": "gzip, deflate, br" };
+export const AMAZON_HOST = /(^|\.)amazon\.(?:[a-z]{2,3}|(?:com|co)\.[a-z]{2})$/i;
+/** `loadPage` options for Amazon pages, used by `renderUrl()` and the Amazon handler. */
+export const AMAZON_PAGE_OPTIONS = {
+	browserFirst: true,
+	headers: { "Accept-Encoding": "gzip, deflate, br" },
+} satisfies LoadPageOptions;
 
 function isBotBlocked(status: number, content: string): boolean {
 	if (status === 403 || status === 503) {
@@ -78,6 +82,8 @@ export interface LoadPageOptions {
 	body?: string;
 	maxBytes?: number;
 	signal?: AbortSignal;
+	/** Try the browser User-Agent first; bot-blocked retries still rotate through the others. */
+	browserFirst?: boolean;
 	/**
 	 * Return true to skip reading the response body for this content type
 	 * (lowercased mime, no params). The caller is expected to re-fetch the
@@ -116,7 +122,8 @@ function parseRetryAfterMs(value: string | null): number {
  * Fetch a page with timeout and size limit
  */
 export async function loadPage(url: string, options: LoadPageOptions = {}): Promise<LoadPageResult> {
-	const { timeout = 20, headers = {}, maxBytes = MAX_BYTES, signal, method = "GET", body } = options;
+	const { timeout = 20, headers = {}, maxBytes = MAX_BYTES, signal, method = "GET", body, browserFirst } = options;
+	const userAgents = browserFirst ? USER_AGENTS.toReversed() : USER_AGENTS;
 
 	let lastError: string | undefined;
 	let retried429 = false;
@@ -125,7 +132,7 @@ export async function loadPage(url: string, options: LoadPageOptions = {}): Prom
 			throw new ToolAbortError();
 		}
 
-		const userAgent = USER_AGENTS[attempt];
+		const userAgent = userAgents[attempt];
 		const requestSignal = ptree.combineSignals(signal, timeout * 1000);
 
 		try {

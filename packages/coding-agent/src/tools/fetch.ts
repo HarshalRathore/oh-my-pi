@@ -25,7 +25,7 @@ import { extractWithParallel, findParallelApiKey, getParallelExtractContent } fr
 import type { RenderResult, SpecialHandler } from "../web/scrapers/types";
 import {
 	AMAZON_HOST,
-	AMAZON_PAGE_HEADERS,
+	AMAZON_PAGE_OPTIONS,
 	finalizeOutput,
 	loadPage,
 	looksLikeHtml,
@@ -1140,8 +1140,8 @@ async function renderUrl(
 	const skipBody = (contentType: string): boolean =>
 		shouldSkipBodyDownload(contentType) ||
 		(GENERIC_BINARY_MIMES[normalizeMime(contentType)] === true && CONVERTIBLE_EXTENSIONS.has(requestExtHint));
-	const headers = AMAZON_HOST.test(URL.parse(url)?.hostname ?? "") ? AMAZON_PAGE_HEADERS : undefined;
-	let response = await loadPage(url, { timeout, signal, headers, skipBodyForContentType: skipBody });
+	const siteOptions = AMAZON_HOST.test(URL.parse(url)?.hostname ?? "") ? AMAZON_PAGE_OPTIONS : undefined;
+	let response = await loadPage(url, { ...siteOptions, timeout, signal, skipBodyForContentType: skipBody });
 	if (
 		response.ok &&
 		response.bodySkipped &&
@@ -1149,7 +1149,12 @@ async function renderUrl(
 		!CONVERTIBLE_EXTENSIONS.has(getExtensionHint(response.finalUrl))
 	) {
 		// Redirect dropped the convertible extension; the body is needed after all.
-		response = await loadPage(url, { timeout, signal, headers, skipBodyForContentType: shouldSkipBodyDownload });
+		response = await loadPage(url, {
+			...siteOptions,
+			timeout,
+			signal,
+			skipBodyForContentType: shouldSkipBodyDownload,
+		});
 	}
 	if (signal?.aborted) {
 		throw new ToolAbortError();
